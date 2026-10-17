@@ -105,6 +105,37 @@ def submit():
             message=message
         ), 500
 
+@app.route("/submittodoitem", methods=["POST"])
+def submit_todo_item():
+    item_name = request.form.get("itemName", "").strip()
+    item_description = request.form.get("itemDescription", "").strip()
+
+    if not item_name or not item_description:
+        return render_template(
+            "index.html",
+            error="Item name and description are required."
+        ), 400
+
+    if submissions_collection is None:
+        return render_template(
+            "index.html",
+            error="Database is unavailable. Please check the Atlas connection."
+        ), 503
+
+    try:
+        submissions_collection.insert_one({
+            "itemName": item_name,
+            "itemDescription": item_description
+        })
+
+        return redirect(url_for("success"))
+
+    except PyMongoError:
+        app.logger.exception("Failed to save To-Do item")
+        return render_template(
+            "index.html",
+            error="Unable to save your To-Do item. Please try again."
+        ), 500
 
 @app.route("/success")
 def success():
